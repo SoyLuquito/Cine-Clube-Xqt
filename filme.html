@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Cine Clube Xiquete · Filme</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23fd77cb'%3E%3Cpath d='M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z'/%3E%3C/svg%3E" type="image/svg+xml">
+    <link rel="stylesheet" href="filme.css">
+</head>
+<body>
+    <div class="backdrop"></div>
+    
+    <header class="header">
+        <button class="back-btn" onclick="window.location.href='menu.html'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"/>
+                <polyline points="12 19 5 12 12 5"/>
+            </svg>
+        </button>
+        <h1 class="header-title">Cine Clube Xiquete</h1>
+        <div style="width:40px;"></div>
+    </header>
+
+    <main class="main-content">
+        <!-- Loading -->
+        <div id="loading" class="loading-state">
+            <div class="loading-spinner"></div>
+            <p>Carregando filme...</p>
+        </div>
+
+        <!-- Conteúdo do Filme -->
+        <div id="movieContent" class="movie-content hidden">
+            <!-- Poster e Info -->
+            <div class="movie-header">
+                <div class="movie-poster-container">
+                    <img id="moviePoster" src="" alt="Poster" class="movie-poster">
+                </div>
+                <div class="movie-info">
+                    <h1 id="movieTitle" class="movie-title">Título do Filme</h1>
+                    <div class="movie-meta">
+                        <span id="movieYear">Ano</span>
+                        <span class="separator">•</span>
+                        <span id="movieGenre">Gênero</span>
+                        <span class="separator">•</span>
+                        <span id="movieDirector">Diretor</span>
+                    </div>
+                    <div class="movie-rating-section">
+                        <div class="movie-rating-display">
+                            <div class="rating-stars" id="movieStars"></div>
+                            <span class="rating-value" id="movieRatingValue">0.0</span>
+                            <span class="rating-count" id="movieRatingCount">(0 avaliações)</span>
+                        </div>
+                    </div>
+                    <div id="movieSinopse" class="movie-sinopse">Sinopse do filme...</div>
+                </div>
+            </div>
+
+            <!-- Categorias de Avaliação (médias) -->
+            <div class="categories-section">
+                <h3 class="section-subtitle">
+                    <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    </svg>
+                    Médias por Categoria
+                </h3>
+                <div class="categories-grid" id="categoriesGrid">
+                    <div class="category-item" data-category="fotografia">
+                        <span class="category-name">Fotografia</span>
+                        <div class="category-stars" id="cat-fotografia"></div>
+                        <span class="category-score" id="cat-score-fotografia">-</span>
+                    </div>
+                    <div class="category-item" data-category="som">
+                        <span class="category-name">Som</span>
+                        <div class="category-stars" id="cat-som"></div>
+                        <span class="category-score" id="cat-score-som">-</span>
+                    </div>
+                    <div class="category-item" data-category="atuacao">
+                        <span class="category-name">Atuação</span>
+                        <div class="category-stars" id="cat-atuacao"></div>
+                        <span class="category-score" id="cat-score-atuacao">-</span>
+                    </div>
+                    <div class="category-item" data-category="roteiro">
+                        <span class="category-name">Roteiro</span>
+                        <div class="category-stars" id="cat-roteiro"></div>
+                        <span class="category-score" id="cat-score-roteiro">-</span>
+                    </div>
+                    <div class="category-item" data-category="direcao">
+                        <span class="category-name">Direção</span>
+                        <div class="category-stars" id="cat-direcao"></div>
+                        <span class="category-score" id="cat-score-direcao">-</span>
+                    </div>
+                    <div class="category-item" data-category="montagem">
+                        <span class="category-name">Montagem</span>
+                        <div class="category-stars" id="cat-montagem"></div>
+                        <span class="category-score" id="cat-score-montagem">-</span>
+                    </div>
+                    <div class="category-item" data-category="direcaoArte">
+                        <span class="category-name">Direção de Arte</span>
+                        <div class="category-stars" id="cat-direcaoArte"></div>
+                        <span class="category-score" id="cat-score-direcaoArte">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Minha Avaliação Geral -->
+            <div class="my-review-section" id="myReviewSection">
+                <h3 class="section-subtitle">
+                    <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    Minha Avaliação Geral
+                </h3>
+                
+                <!-- Formulário de Avaliação -->
+                <div id="myReviewForm" class="review-form">
+                    <!-- Grupo de Nota -->
+                    <div class="rating-group">
+                        <div class="form-group">
+                            <label>Nota Geral</label>
+                            <div class="star-rating-input" id="myRatingStars">
+                                <!-- As estrelas serão geradas pelo JavaScript -->
+                            </div>
+                            <span class="rating-label" id="myRatingLabel">Selecione uma nota</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Grupo de Resenha -->
+                    <div class="review-group">
+                        <div class="form-group">
+                            <label>Resenha</label>
+                            <textarea id="myReviewText" rows="4" placeholder="Escreva sua crítica ou opinião sobre o filme..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Botões -->
+                    <div class="review-actions">
+                        <button class="btn-primary" id="submitReviewBtn">Enviar Avaliação</button>
+                        <button class="btn-secondary hidden" id="deleteReviewBtn">Excluir Avaliação</button>
+                    </div>
+                </div>
+                
+                <!-- Visualização da Avaliação -->
+                <div id="myReviewDisplay" class="my-review-display hidden">
+                    <div class="my-review-header">
+                        <div class="my-review-stars" id="myReviewStars"></div>
+                        <span class="my-review-score" id="myReviewScore"></span>
+                    </div>
+                    <p class="my-review-text" id="myReviewTextDisplay"></p>
+                    <div class="my-review-actions">
+                        <button class="btn-edit" id="editReviewBtn">Editar Avaliação</button>
+                        <button class="btn-delete" id="deleteReviewBtn2">Excluir</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categorias Técnicas - Minhas Avaliações -->
+            <div class="technical-review-section">
+                <button class="btn-toggle-categories" id="toggleCategoriesBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    </svg>
+                    Minhas Avaliações Técnicas
+                    <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                </button>
+                
+                <div id="technicalCategories" class="technical-categories hidden">
+                    <p class="technical-hint">Avalie cada categoria técnica do filme (opcional)</p>
+                    <div class="technical-grid">
+                        <div class="tech-category-item" data-category="fotografia">
+                            <span class="tech-category-name">Fotografia</span>
+                            <div class="tech-stars" id="tech-fotografia"></div>
+                            <span class="tech-score" id="tech-score-fotografia">-</span>
+                        </div>
+                        <div class="tech-category-item" data-category="som">
+                            <span class="tech-category-name">Som</span>
+                            <div class="tech-stars" id="tech-som"></div>
+                            <span class="tech-score" id="tech-score-som">-</span>
+                        </div>
+                        <div class="tech-category-item" data-category="atuacao">
+                            <span class="tech-category-name">Atuação</span>
+                            <div class="tech-stars" id="tech-atuacao"></div>
+                            <span class="tech-score" id="tech-score-atuacao">-</span>
+                        </div>
+                        <div class="tech-category-item" data-category="roteiro">
+                            <span class="tech-category-name">Roteiro</span>
+                            <div class="tech-stars" id="tech-roteiro"></div>
+                            <span class="tech-score" id="tech-score-roteiro">-</span>
+                        </div>
+                        <div class="tech-category-item" data-category="direcao">
+                            <span class="tech-category-name">Direção</span>
+                            <div class="tech-stars" id="tech-direcao"></div>
+                            <span class="tech-score" id="tech-score-direcao">-</span>
+                        </div>
+                        <div class="tech-category-item" data-category="montagem">
+                            <span class="tech-category-name">Montagem</span>
+                            <div class="tech-stars" id="tech-montagem"></div>
+                            <span class="tech-score" id="tech-score-montagem">-</span>
+                        </div>
+                        <div class="tech-category-item" data-category="direcaoArte">
+                            <span class="tech-category-name">Direção de Arte</span>
+                            <div class="tech-stars" id="tech-direcaoArte"></div>
+                            <span class="tech-score" id="tech-score-direcaoArte">-</span>
+                        </div>
+                    </div>
+                    <button class="btn-save-technical" id="saveTechnicalBtn">Salvar Avaliações Técnicas</button>
+                </div>
+            </div>
+
+            <!-- Comentários/Resenhas -->
+            <div class="comments-section">
+                <h3 class="section-subtitle">
+                    <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                    </svg>
+                    Resenhas
+                </h3>
+                <div id="commentsList" class="comments-list">
+                    <div class="no-comments">Nenhuma resenha ainda. Seja o primeiro!</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Sistema de Notificações Toast -->
+    <div id="notification-container"></div>
+
+    <script type="module" src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js"></script>
+    <script type="module" src="filme.js"></script>
+</body>
+</html>

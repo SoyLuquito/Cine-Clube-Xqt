@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Cine Clube Xiquete · Menu</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23fd77cb'%3E%3Cpath d='M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z'/%3E%3C/svg%3E" type="image/svg+xml">
+    <link rel="stylesheet" href="menu.css">
+</head>
+<body>
+    <div class="backdrop"></div>
+    
+    <header class="header">
+        <div class="header-left">
+            <div class="user-profile" id="userProfile">
+                <div class="avatar" id="userAvatar">
+                    <span id="avatarInitial"></span>
+                </div>
+                <div class="user-info">
+                    <span class="user-name" id="userName">Carregando...</span>
+                    <span class="user-login" id="userLogin">@carregando</span>
+                </div>
+            </div>
+        </div>
+        <div class="header-right">
+            <button class="admin-btn hidden" id="adminBtn" aria-label="Admin">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    <path d="M12 8v4"/>
+                    <path d="M12 16h.01"/>
+                </svg>
+            </button>
+            <button class="notification-btn" id="notificationBtn" aria-label="Notificações">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+                <span class="notification-badge" id="notificationBadge">0</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <!-- Barra de pesquisa -->
+        <div class="search-container">
+            <div class="search-wrapper">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" id="searchInput" placeholder="Pesquisar filmes..." autocomplete="off">
+            </div>
+            <div id="searchResults" class="search-results hidden"></div>
+        </div>
+
+                <!-- Filme da Semana -->
+        <section class="featured-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    </svg>
+                    Filme da Semana
+                </h2>
+                <button class="admin-featured-btn hidden" id="adminFeaturedBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 20h9"/>
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                    </svg>
+                    Alterar
+                </button>
+            </div>
+            <div id="featuredMovie" class="featured-movie">
+                <div class="featured-loading">Carregando filme da semana...</div>
+            </div>
+        </section>
+
+        <!-- Últimas Avaliações -->
+        <section class="reviews-section">
+            <h2 class="section-title">
+                <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9"/>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                    <polyline points="6 9 12 15 18 9"/>
+                </svg>
+                Últimas Avaliações
+            </h2>
+            <div id="reviewsList" class="reviews-list">
+                <div class="loading-reviews">Carregando avaliações...</div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Sistema de Notificações Toast -->
+    <div id="notification-container"></div>
+
+    <!-- Modal de Notificações -->
+    <div class="modal-overlay hidden" id="notificationModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Notificações</h2>
+                <button class="modal-close" id="closeNotifications">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body" id="notificationsList">
+                <div class="no-notifications">Nenhuma notificação</div>
+            </div>
+        </div>
+    </div>
+
+            <!-- Modal Admin - Gerenciar Filmes -->
+    <div class="modal-overlay hidden" id="adminModal">
+        <div class="modal-content admin-modal">
+            <div class="modal-header">
+                <h2>Gerenciar Filmes</h2>
+                <button class="modal-close" id="closeAdminModal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Tabs -->
+                <div class="admin-tabs">
+                    <button class="admin-tab active" data-tab="existing">Selecionar existente</button>
+                    <button class="admin-tab" data-tab="new">Criar novo filme</button>
+                    <button class="admin-tab" data-tab="add-only">Adicionar filme (não da semana)</button>
+                </div>
+
+                <!-- Aba: Filmes Existentes -->
+                <div class="admin-tab-content active" id="tab-existing">
+                    <div class="admin-search">
+                        <div class="search-wrapper admin-search-wrapper">
+                            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8"/>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                            </svg>
+                            <input type="text" id="adminSearchInput" placeholder="Buscar filme existente..." autocomplete="off">
+                        </div>
+                        <div id="adminSearchResults" class="search-results admin-search-results hidden"></div>
+                    </div>
+                    <div id="adminSelectedMovie" class="admin-selected-movie hidden">
+                        <div class="admin-selected-content">
+                            <div class="admin-selected-poster" id="adminSelectedPoster"></div>
+                            <div class="admin-selected-info">
+                                <div class="admin-selected-title" id="adminSelectedTitle"></div>
+                                <div class="admin-selected-year" id="adminSelectedYear"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aba: Criar Novo Filme e Definir como da Semana -->
+                <div class="admin-tab-content" id="tab-new">
+                    <form id="adminNewMovieForm" class="admin-new-movie-form">
+                        <div class="admin-form-group">
+                            <label for="adminMoviePoster">Capa do filme</label>
+                            <input type="file" id="adminMoviePoster" accept="image/*">
+                            <div id="adminMoviePosterPreview" class="admin-poster-preview hidden"></div>
+                        </div>
+                        <div class="admin-form-group">
+                            <label for="adminMovieNome">Nome do filme *</label>
+                            <input type="text" id="adminMovieNome" placeholder="Ex: O Poderoso Chefão" required>
+                        </div>
+                        <div class="admin-form-row">
+                            <div class="admin-form-group">
+                                <label for="adminMovieAno">Ano *</label>
+                                <input type="text" id="adminMovieAno" placeholder="1972" required>
+                            </div>
+                            <div class="admin-form-group">
+                                <label for="adminMovieGenero">Gênero *</label>
+                                <input type="text" id="adminMovieGenero" placeholder="Drama, Crime" required>
+                            </div>
+                        </div>
+                        <div class="admin-form-group">
+                            <label for="adminMovieDiretor">Direção</label>
+                            <input type="text" id="adminMovieDiretor" placeholder="Francis Ford Coppola">
+                        </div>
+                        <div class="admin-form-group">
+                            <label for="adminMovieSinopse">Sinopse</label>
+                            <textarea id="adminMovieSinopse" rows="3" placeholder="Descrição do filme..."></textarea>
+                        </div>
+                        <button type="submit" class="admin-create-btn">Criar Filme e Definir como da Semana</button>
+                    </form>
+                </div>
+
+                <!-- Aba: Adicionar Filme (sem ser da semana) -->
+                <div class="admin-tab-content" id="tab-add-only">
+                    <form id="adminAddOnlyForm" class="admin-new-movie-form">
+                        <div class="admin-form-group">
+                            <label for="adminAddPoster">Capa do filme</label>
+                            <input type="file" id="adminAddPoster" accept="image/*">
+                            <div id="adminAddPosterPreview" class="admin-poster-preview hidden"></div>
+                        </div>
+                        <div class="admin-form-group">
+                            <label for="adminAddNome">Nome do filme *</label>
+                            <input type="text" id="adminAddNome" placeholder="Ex: O Poderoso Chefão" required>
+                        </div>
+                        <div class="admin-form-row">
+                            <div class="admin-form-group">
+                                <label for="adminAddAno">Ano *</label>
+                                <input type="text" id="adminAddAno" placeholder="1972" required>
+                            </div>
+                            <div class="admin-form-group">
+                                <label for="adminAddGenero">Gênero *</label>
+                                <input type="text" id="adminAddGenero" placeholder="Drama, Crime" required>
+                            </div>
+                        </div>
+                        <div class="admin-form-group">
+                            <label for="adminAddDiretor">Direção</label>
+                            <input type="text" id="adminAddDiretor" placeholder="Francis Ford Coppola">
+                        </div>
+                        <div class="admin-form-group">
+                            <label for="adminAddSinopse">Sinopse</label>
+                            <textarea id="adminAddSinopse" rows="3" placeholder="Descrição do filme..."></textarea>
+                        </div>
+                        <button type="submit" class="admin-create-btn admin-add-only-btn">Adicionar Filme</button>
+                    </form>
+                </div>
+
+                <!-- Filme Atual -->
+                <div id="adminCurrentFeatured" class="admin-current-featured">
+                    <div class="admin-current-label">Atual filme da semana:</div>
+                    <div id="adminCurrentMovie" class="admin-current-movie">Nenhum filme definido</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js"></script>
+    <script type="module" src="menu.js"></script>
+</body>
+</html>
