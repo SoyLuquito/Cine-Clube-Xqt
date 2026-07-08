@@ -701,7 +701,6 @@ function openCropModal(imageSrc) {
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
     
-    // Resetar posição
     const cropBoxEl = document.getElementById('cropBox');
     if (cropBoxEl) {
         cropBoxEl.style.left = '50%';
@@ -711,7 +710,6 @@ function openCropModal(imageSrc) {
         cropBoxEl.style.height = '70%';
     }
     
-    // Garantir que a imagem carregou
     img.onload = function() {
         setupDragAndResizeEvents();
     };
@@ -754,7 +752,6 @@ function setupDragAndResizeEvents() {
     
     if (!wrapper || !cropBoxEl) return;
     
-    // Clonar para remover eventos antigos
     const newWrapper = wrapper.cloneNode(true);
     wrapper.parentNode.replaceChild(newWrapper, wrapper);
     
@@ -762,14 +759,12 @@ function setupDragAndResizeEvents() {
     cropBox = document.getElementById('cropBox');
     cropImageElement = document.getElementById('cropImage');
     
-    // Aplicar tamanho
     cropBox.style.width = `${cropBoxSize}%`;
     cropBox.style.height = `${cropBoxSize}%`;
     cropBox.style.left = '50%';
     cropBox.style.top = '50%';
     cropBox.style.transform = 'translate(-50%, -50%)';
     
-    // ===== ARRASTE POR MOUSE =====
     cropWrapper.addEventListener('mousedown', function(e) {
         if (e.target.closest('.crop-btn') || e.target.closest('.crop-actions')) return;
         
@@ -779,8 +774,6 @@ function setupDragAndResizeEvents() {
         isDragging = true;
         dragStartX = e.clientX;
         dragStartY = e.clientY;
-        
-        // Posição atual do box em relação ao wrapper (em pixels)
         boxStartX = boxRect.left - wrapperRect.left;
         boxStartY = boxRect.top - wrapperRect.top;
         
@@ -796,15 +789,12 @@ function setupDragAndResizeEvents() {
         const wrapperWidth = wrapperRect.width;
         const wrapperHeight = wrapperRect.height;
         
-        // Novo movimento
         const deltaX = e.clientX - dragStartX;
         const deltaY = e.clientY - dragStartY;
         
-        // Nova posição em pixels
         let newLeft = boxStartX + deltaX;
         let newTop = boxStartY + deltaY;
         
-        // ===== LIMITE: NÃO PODE SAIR DA IMAGEM =====
         const boxSizePx = (cropBoxSize / 100) * wrapperWidth;
         const maxX = wrapperWidth - boxSizePx;
         const maxY = wrapperHeight - boxSizePx;
@@ -812,7 +802,6 @@ function setupDragAndResizeEvents() {
         newLeft = Math.max(0, Math.min(maxX, newLeft));
         newTop = Math.max(0, Math.min(maxY, newTop));
         
-        // Converter para porcentagem
         const percentX = (newLeft / wrapperWidth) * 100;
         const percentY = (newTop / wrapperHeight) * 100;
         
@@ -829,7 +818,6 @@ function setupDragAndResizeEvents() {
         }
     });
     
-    // ===== ARRASTE POR TOUCH =====
     let touchStartX = 0, touchStartY = 0, touchBoxStartX = 0, touchBoxStartY = 0;
     
     cropWrapper.addEventListener('touchstart', function(e) {
@@ -889,7 +877,6 @@ function setupDragAndResizeEvents() {
         }
     });
     
-    // ===== BOTÕES =====
     const increaseBtn = document.getElementById('increaseBtn');
     const decreaseBtn = document.getElementById('decreaseBtn');
     
@@ -912,6 +899,41 @@ function setupDragAndResizeEvents() {
     }
 }
 
+// ===== FUNÇÃO PARA COMPRIMIR IMAGEM =====
+function compressImage(base64Image, maxWidth = 300, maxHeight = 300, quality = 0.7) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = function() {
+            let width = img.width;
+            let height = img.height;
+            
+            if (width > height) {
+                if (width > maxWidth) {
+                    height = (height * maxWidth) / width;
+                    width = maxWidth;
+                }
+            } else {
+                if (height > maxHeight) {
+                    width = (width * maxHeight) / height;
+                    height = maxHeight;
+                }
+            }
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            const compressed = canvas.toDataURL('image/jpeg', quality);
+            resolve(compressed);
+        };
+        img.onerror = reject;
+        img.src = base64Image;
+    });
+}
+
+// ===== APPLY CROP (VERSÃO ÚNICA E CORRIGIDA) =====
 function applyCrop() {
     if (!cropImageElement) return;
     
@@ -939,7 +961,8 @@ function applyCrop() {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     
-    const outputSize = 400;
+    // Tamanho menor para avatar (200x200 é suficiente)
+    const outputSize = 200;
     canvas.width = outputSize;
     canvas.height = outputSize;
     
@@ -979,27 +1002,62 @@ function applyCrop() {
         0, 0, outputSize, outputSize
     );
     
-    const croppedImage = canvas.toDataURL('image/jpeg', 0.92);
-    saveProfileImage(croppedImage);
+    const croppedImage = canvas.toDataURL('image/jpeg', 0.8);
+    
+    showToast('info', 'Processando', 'Comprimindo imagem...');
+    
+    compressImage(croppedImage, 150, 150, 0.7)
+        .then(compressedImage => {
+            saveProfileImage(compressedImage);
+        })
+        .catch(error => {
+            console.error('Erro ao comprimir imagem:', error);
+            saveProfileImage(croppedImage);
+        });
+    
     closeCropModal();
 }
 
+// ===== SAVE PROFILE IMAGE =====
 async function saveProfileImage(base64Image) {
-  try {
-    await updateDoc(doc(db, 'usuarios', currentUserData.id), {
-      fotoPerfil: base64Image
-    });
+    const sizeInBytes = base64Image.length * 0.75;
+    const sizeInMB = sizeInBytes / (1024 * 1024);
     
-    currentUserData.fotoPerfil = base64Image;
-    avatarImage.src = base64Image;
-    avatarImage.style.display = 'block';
-    avatarInitial.textContent = '';
+    if (sizeInMB > 0.8) {
+        showToast('warning', 'Imagem muito grande', 'Tentando comprimir mais...');
+        try {
+            const compressed = await compressImage(base64Image, 120, 120, 0.5);
+            await saveProfileImageToFirestore(compressed);
+            return;
+        } catch (error) {
+            showToast('error', 'Erro', 'Não foi possível comprimir a imagem.');
+            return;
+        }
+    }
     
-    showToast('success', 'Foto atualizada!', 'Sua foto de perfil foi atualizada.');
-  } catch (error) {
-    console.error('Erro ao salvar foto:', error);
-    showToast('error', 'Erro', 'Não foi possível salvar a foto.');
-  }
+    await saveProfileImageToFirestore(base64Image);
+}
+
+async function saveProfileImageToFirestore(base64Image) {
+    try {
+        await updateDoc(doc(db, 'usuarios', currentUserData.id), {
+            fotoPerfil: base64Image
+        });
+        
+        currentUserData.fotoPerfil = base64Image;
+        avatarImage.src = base64Image;
+        avatarImage.style.display = 'block';
+        avatarInitial.textContent = '';
+        
+        showToast('success', 'Foto atualizada!', 'Sua foto de perfil foi atualizada.');
+    } catch (error) {
+        console.error('Erro ao salvar foto:', error);
+        if (error.message.includes('size')) {
+            showToast('error', 'Erro', 'A imagem é muito grande. Tente uma imagem menor (máx 150KB).');
+        } else {
+            showToast('error', 'Erro', 'Não foi possível salvar a foto.');
+        }
+    }
 }
 
 // ===== EDIT MODE =====

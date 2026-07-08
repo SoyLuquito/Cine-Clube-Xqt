@@ -129,6 +129,44 @@ function showToast(type, title, message, duration = 4000) {
   }, duration);
 }
 
+// ===== FUNÇÃO PARA COMPRIMIR IMAGEM =====
+function compressImage(base64Image, maxWidth = 300, maxHeight = 450, quality = 0.7) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = function() {
+            let width = img.width;
+            let height = img.height;
+            
+            // Manter proporção
+            if (width > height) {
+                if (width > maxWidth) {
+                    height = (height * maxWidth) / width;
+                    width = maxWidth;
+                }
+            } else {
+                if (height > maxHeight) {
+                    width = (width * maxHeight) / height;
+                    height = maxHeight;
+                }
+            }
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Converter para JPEG com qualidade reduzida
+            const compressed = canvas.toDataURL('image/jpeg', quality);
+            resolve(compressed);
+        };
+        img.onerror = function() {
+            reject(new Error('Falha ao carregar imagem para compressão'));
+        };
+        img.src = base64Image;
+    });
+}
+
 // ===== CHECK ADMIN =====
 function checkAdmin(user) {
   if (user && user.email === 'contato.lucadesousa@gmail.com') {
@@ -234,7 +272,7 @@ function displayFeaturedMovie(movie) {
     starsHtml += '★';
   }
   if (hasHalfStar) {
-    starsHtml += '★'; // Meia estrela
+    starsHtml += '★';
   }
   for (let i = 0; i < emptyStars; i++) {
     starsHtml += '☆';
@@ -294,7 +332,6 @@ function displayReviews(reviews) {
   
   let html = '';
   reviews.forEach((review) => {
-    // Usar a mesma lógica de estrelas do filme
     const rating = review.nota || 0;
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 >= 0.5 && rating % 1 < 1;
@@ -305,7 +342,7 @@ function displayReviews(reviews) {
       starsHtml += '★';
     }
     if (hasHalfStar) {
-      starsHtml += '★'; // Meia estrela (será estilizada com CSS)
+      starsHtml += '★';
     }
     for (let i = 0; i < emptyStars; i++) {
       starsHtml += '☆';
@@ -637,24 +674,36 @@ function formatTime(timestamp) {
   return date.toLocaleDateString('pt-BR');
 }
 
-// ===== ADMIN: UPLOAD POSTER =====
+// ===== ADMIN: UPLOAD POSTER (com compressão) =====
 adminMoviePoster.addEventListener('change', function(e) {
   const file = e.target.files[0];
   if (!file) return;
   
-  // Verificar tamanho da imagem (máximo 500KB para evitar problemas)
-  if (file.size > 500 * 1024) {
-    showToast('warning', 'Imagem muito grande', 'Use imagens de até 500KB para melhor performance.');
+  if (file.size > 2 * 1024 * 1024) {
+    showToast('warning', 'Imagem muito grande', 'Use imagens de até 2MB.');
     this.value = '';
     return;
   }
   
   const reader = new FileReader();
-  reader.onload = function(event) {
-    posterBase64 = event.target.result;
-    const preview = document.getElementById('adminMoviePosterPreview');
-    preview.innerHTML = `<img src="${posterBase64}" alt="Preview">`;
-    preview.classList.remove('hidden');
+  reader.onload = async function(event) {
+    try {
+      const preview = document.getElementById('adminMoviePosterPreview');
+      preview.innerHTML = `<img src="${event.target.result}" alt="Preview">`;
+      preview.classList.remove('hidden');
+      
+      showToast('info', 'Processando', 'Comprimindo imagem...');
+      const compressed = await compressImage(event.target.result, 300, 450, 0.7);
+      posterBase64 = compressed;
+      
+      preview.innerHTML = `<img src="${compressed}" alt="Preview">`;
+      showToast('success', 'Imagem comprimida!', 'A imagem foi otimizada para o catálogo.');
+      
+    } catch (error) {
+      console.error('Erro ao comprimir imagem:', error);
+      showToast('warning', 'Aviso', 'Não foi possível comprimir a imagem. Usando a original.');
+      posterBase64 = event.target.result;
+    }
   };
   reader.readAsDataURL(file);
 });
@@ -680,7 +729,7 @@ document.querySelectorAll('.admin-tab').forEach(tab => {
   });
 });
 
-// ===== ADMIN: CREATE NEW MOVIE (SALVANDO BASE64 DIRETO NO FIRESTORE) =====
+// ===== ADMIN: CREATE NEW MOVIE (COM COMPRESSÃO) =====
 document.getElementById('adminNewMovieForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   
@@ -697,17 +746,32 @@ document.getElementById('adminNewMovieForm').addEventListener('submit', async fu
   
   const submitBtn = this.querySelector('.admin-create-btn');
   submitBtn.disabled = true;
-  submitBtn.textContent = 'Criando...';
+  submitBtn.textContent = 'Processando...';
   
   try {
-    // Salvar a imagem em base64 diretamente no Firestore
+    let posterFinal = posterBase64 || '';
+    
+    if (posterFinal) {
+      const sizeInBytes = posterFinal.length * 0.75;
+      const sizeInKB = sizeInBytes / 1024;
+      
+      if (sizeInKB > 100) {
+        showToast('info', 'Processando', 'Comprimindo imagem...');
+        try {
+          posterFinal = await compressImage(posterFinal, 300, 450, 0.6);
+        } catch (compressError) {
+          console.error('Erro ao comprimir imagem:', compressError);
+        }
+      }
+    }
+    
     const movieData = {
       nome: nome,
       ano: ano,
       genero: genero,
       diretor: diretor || '',
       sinopse: sinopse || '',
-      poster: posterBase64 || '', // Salva o base64 diretamente no documento
+      poster: posterFinal,
       avaliacoes: 0,
       totalAvaliacoes: 0,
       createdAt: serverTimestamp(),
@@ -731,6 +795,10 @@ document.getElementById('adminNewMovieForm').addEventListener('submit', async fu
     await loadFeaturedMovie();
     await loadMovies();
     
+    this.reset();
+    document.getElementById('adminMoviePosterPreview').classList.add('hidden');
+    posterBase64 = null;
+    
   } catch (error) {
     console.error('Erro ao criar filme:', error);
     showToast('error', 'Erro', 'Não foi possível criar o filme. Tente novamente.');
@@ -750,25 +818,7 @@ document.getElementById('adminAddOnlyForm').addEventListener('submit', async fun
   const diretor = document.getElementById('adminAddDiretor').value.trim();
   const sinopse = document.getElementById('adminAddSinopse').value.trim();
   
-  // Pegar a imagem se houver
-  const posterInput = document.getElementById('adminAddPoster');
-  let posterBase64Local = null;
-  
-  if (posterInput.files && posterInput.files[0]) {
-    const file = posterInput.files[0];
-    if (file.size > 500 * 1024) {
-      showToast('warning', 'Imagem muito grande', 'Use imagens de até 500KB.');
-      return;
-    }
-    const reader = new FileReader();
-    const fileData = await new Promise((resolve) => {
-      reader.onload = function(event) {
-        resolve(event.target.result);
-      };
-      reader.readAsDataURL(file);
-    });
-    posterBase64Local = fileData;
-  }
+  let posterFinal = window.adminAddPosterCompressed || '';
   
   if (!nome || !ano || !genero) {
     showToast('warning', 'Campos obrigatórios', 'Preencha Nome, Ano e Gênero.');
@@ -786,7 +836,7 @@ document.getElementById('adminAddOnlyForm').addEventListener('submit', async fun
       genero: genero,
       diretor: diretor || '',
       sinopse: sinopse || '',
-      poster: posterBase64Local || '',
+      poster: posterFinal || '',
       avaliacoes: 0,
       totalAvaliacoes: 0,
       createdAt: serverTimestamp(),
@@ -798,9 +848,9 @@ document.getElementById('adminAddOnlyForm').addEventListener('submit', async fun
     
     allMovies.push(newMovie);
     
-    // Resetar formulário
     this.reset();
     document.getElementById('adminAddPosterPreview').classList.add('hidden');
+    window.adminAddPosterCompressed = null;
     
     showToast('success', 'Filme adicionado!', `${nome} foi adicionado ao catálogo.`);
     await loadMovies();
@@ -814,22 +864,37 @@ document.getElementById('adminAddOnlyForm').addEventListener('submit', async fun
   }
 });
 
-// ===== ADMIN: UPLOAD POSTER PARA A ABA "ADICIONAR FILME" =====
+// ===== ADMIN: UPLOAD POSTER PARA A ABA "ADICIONAR FILME" (com compressão) =====
 document.getElementById('adminAddPoster').addEventListener('change', function(e) {
   const file = e.target.files[0];
   if (!file) return;
   
-  if (file.size > 500 * 1024) {
-    showToast('warning', 'Imagem muito grande', 'Use imagens de até 500KB para melhor performance.');
+  if (file.size > 2 * 1024 * 1024) {
+    showToast('warning', 'Imagem muito grande', 'Use imagens de até 2MB.');
     this.value = '';
     return;
   }
   
   const reader = new FileReader();
-  reader.onload = function(event) {
-    const preview = document.getElementById('adminAddPosterPreview');
-    preview.innerHTML = `<img src="${event.target.result}" alt="Preview">`;
-    preview.classList.remove('hidden');
+  reader.onload = async function(event) {
+    try {
+      const preview = document.getElementById('adminAddPosterPreview');
+      preview.innerHTML = `<img src="${event.target.result}" alt="Preview">`;
+      preview.classList.remove('hidden');
+      
+      showToast('info', 'Processando', 'Comprimindo imagem...');
+      const compressed = await compressImage(event.target.result, 300, 450, 0.7);
+      
+      window.adminAddPosterCompressed = compressed;
+      
+      preview.innerHTML = `<img src="${compressed}" alt="Preview">`;
+      showToast('success', 'Imagem comprimida!', 'A imagem foi otimizada para o catálogo.');
+      
+    } catch (error) {
+      console.error('Erro ao comprimir imagem:', error);
+      showToast('warning', 'Aviso', 'Não foi possível comprimir a imagem. Usando a original.');
+      window.adminAddPosterCompressed = event.target.result;
+    }
   };
   reader.readAsDataURL(file);
 });
@@ -1011,6 +1076,15 @@ async function createMovie(movieData) {
   }
 }
 window.createMovie = createMovie;
+
+// ===== MEMBERS BUTTON =====
+const membersBtn = document.getElementById('membersBtn');
+
+if (membersBtn) {
+    membersBtn.addEventListener('click', () => {
+        window.location.href = 'membros.html';
+    });
+}
 
 // ===== EVENT LISTENERS =====
 userProfile.addEventListener('click', () => {

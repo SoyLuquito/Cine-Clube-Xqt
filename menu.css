@@ -1480,3 +1480,28 @@ body {
 .admin-tab-content.active {
     display: block;
 }
+
+/* ===== MEMBERS BUTTON ===== */
+.members-btn {
+    background: none;
+    border: none;
+    color: #aaa;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.members-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+}
+
+.members-btn svg {
+    width: 24px;
+    height: 24px;
+    stroke: currentColor;
+}

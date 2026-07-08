@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Cine Clube Xiquete · Membros</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23fd77cb'%3E%3Cpath d='M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z'/%3E%3C/svg%3E" type="image/svg+xml">
+    <link rel="stylesheet" href="membros.css">
+</head>
+<body>
+    <div class="backdrop"></div>
+    
+    <header class="header">
+        <button class="back-btn" onclick="window.location.href='menu.html'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"/>
+                <polyline points="12 19 5 12 12 5"/>
+            </svg>
+        </button>
+        <h1 class="header-title">Cine Clube Xiquete</h1>
+        <div style="width:40px;"></div>
+    </header>
+
+    <main class="main-content">
+        <!-- Loading -->
+        <div id="loading" class="loading-state">
+            <div class="loading-spinner"></div>
+            <p>Carregando membros...</p>
+        </div>
+
+        <!-- Conteúdo -->
+        <div id="membersContent" class="members-content hidden">
+            <div class="members-header">
+                <h2 class="page-title">
+                    <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                    Membros do Clube
+                </h2>
+                <p class="members-count" id="membersCount">0 membros</p>
+            </div>
+
+            <div class="members-grid" id="membersGrid">
+                <!-- Membros serão inseridos aqui -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Sistema de Notificações Toast -->
+    <div id="notification-container"></div>
+
+    <script type="module" src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js"></script>
+    <script type="module" src="membros.js"></script>
+</body>
+</html>
