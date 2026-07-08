@@ -356,25 +356,52 @@ function displayReviews(reviews) {
     
     const userNome = review.nomeUsuario || review.usuario || 'Usuário';
     const userLogin = review.loginUsuario || 'usuario';
-    const initial = userNome.charAt(0).toUpperCase();
+    
+    // VERIFICA SE TEM FOTO DO USUÁRIO
+    const userPhoto = review.fotoUsuario || null;
+    
+    // VERIFICA SE TEM POSTER DO FILME
+    const posterUrl = review.poster || null;
+    
+    // Avatar do usuário
+    let avatarHtml = '';
+    if (userPhoto) {
+      avatarHtml = `<img src="${userPhoto}" alt="${userNome}" style="width:100%;height:100%;object-fit:cover;">`;
+    } else {
+      avatarHtml = userNome.charAt(0).toUpperCase();
+    }
+    
+    // Poster do filme
+    let posterHtml = '';
+    if (posterUrl) {
+      posterHtml = `<img src="${posterUrl}" alt="${review.nomeFilme}">`;
+    } else {
+      posterHtml = `<div class="no-poster">${review.nomeFilme || 'Filme'}</div>`;
+    }
     
     html += `
       <div class="review-item" data-review-id="${review.id}">
         <div class="review-header" onclick="window.location.href='perfil.html?uid=${review.uid}'">
-          <div class="review-avatar">${initial}</div>
+          <div class="review-avatar">${avatarHtml}</div>
           <div class="review-user">
             <div class="review-username">${userNome}</div>
             <div class="review-userlogin">@${userLogin}</div>
           </div>
         </div>
-        <div class="review-movie" onclick="window.location.href='filme.html?id=${review.filmeId}'">
-          Filme: <strong>${review.nomeFilme || 'Filme'}</strong>
+        <div class="review-body" onclick="window.location.href='filme.html?id=${review.filmeId}'">
+          <div class="review-poster">
+            ${posterHtml}
+          </div>
+          <div class="review-content">
+            <div class="review-movie"><strong>${review.nomeFilme || 'Filme'}</strong></div>
+            <div class="review-stars ${hasHalfStar ? 'has-half' : ''}">${starsHtml}</div>
+            <div class="review-rating">${rating.toFixed(1)}</div>
+            ${review.comentario ? `<div class="review-text">${review.comentario}</div>` : ''}
+          </div>
         </div>
-        <div class="review-stars ${hasHalfStar ? 'has-half' : ''}">${starsHtml}</div>
-        ${review.comentario ? `<div class="review-text">${review.comentario}</div>` : ''}
         <div class="review-actions">
-          <button class="review-action-btn like-btn" data-review-id="${review.id}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <button class="review-action-btn like-btn ${review.usuariosCurtiram && review.usuariosCurtiram.includes(currentUser?.uid) ? 'liked' : ''}" data-review-id="${review.id}">
+            <svg viewBox="0 0 24 24" fill="${review.usuariosCurtiram && review.usuariosCurtiram.includes(currentUser?.uid) ? '#fd77cb' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/>
               <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
             </svg>
@@ -392,7 +419,7 @@ function displayReviews(reviews) {
   });
 }
 
-// ===== HANDLE LIKE =====
+// ===== HANDLE LIKE - CORRIGIDO =====
 async function handleLike(e) {
   e.stopPropagation();
   const btn = e.currentTarget;
@@ -404,6 +431,7 @@ async function handleLike(e) {
   }
   
   try {
+    // 1. ATUALIZA NA COLEÇÃO 'avaliacoes'
     const reviewRef = doc(db, 'avaliacoes', reviewId);
     const reviewDoc = await getDoc(reviewRef);
     
@@ -416,31 +444,54 @@ async function handleLike(e) {
     const userUid = currentUser.uid;
     const hasLiked = usuariosCurtiram.includes(userUid);
     
+    console.log('🔍 Menu - Estado atual:', { hasLiked, curtidas });
+    
+    const svg = btn.querySelector('svg');
+    
     if (hasLiked) {
+      // REMOVE o like
       await updateDoc(reviewRef, {
         curtidas: curtidas - 1,
         usuariosCurtiram: arrayRemove(userUid)
       });
       btn.classList.remove('liked');
-      showToast('info', 'Curtida removida', 'Você removeu sua curtida.');
+      if (svg) svg.setAttribute('fill', 'none');
+      console.log('👎 Like removido no menu');
     } else {
+      // ADICIONA o like
       await updateDoc(reviewRef, {
         curtidas: curtidas + 1,
         usuariosCurtiram: arrayUnion(userUid)
       });
       btn.classList.add('liked');
-      showToast('success', 'Curtida adicionada', 'Você curtiu esta avaliação!');
+      if (svg) svg.setAttribute('fill', '#fd77cb');
+      console.log('👍 Like adicionado no menu');
+    }
+    
+    // 2. 🔥 TAMBÉM ATUALIZA NA COLEÇÃO 'comentarios'
+    const commentRef = doc(db, 'comentarios', reviewId);
+    const commentDoc = await getDoc(commentRef);
+    
+    if (commentDoc.exists()) {
+      const commentData = commentDoc.data();
+      const commentCurtidas = commentData.curtidas || 0;
+      const commentUsuariosCurtiram = commentData.usuariosCurtiram || [];
+      const commentHasLiked = commentUsuariosCurtiram.includes(userUid);
       
-      if (reviewData.uid !== userUid) {
-        await createNotification({
-          tipo: 'curtida',
-          mensagem: `${currentUserData?.nome || 'Alguém'} curtiu sua avaliação de "${reviewData.nomeFilme}"`,
-          usuarioOrigem: userUid,
-          usuarioDestino: reviewData.uid,
-          reviewId: reviewId,
-          filmeId: reviewData.filmeId,
-          data: new Date().toISOString()
-        });
+      // 🔥 VERIFICA SE O ESTADO É DIFERENTE ANTES DE ATUALIZAR
+      if (commentHasLiked !== hasLiked) {
+        if (hasLiked) {
+          await updateDoc(commentRef, {
+            curtidas: commentCurtidas - 1,
+            usuariosCurtiram: arrayRemove(userUid)
+          });
+        } else {
+          await updateDoc(commentRef, {
+            curtidas: commentCurtidas + 1,
+            usuariosCurtiram: arrayUnion(userUid)
+          });
+        }
+        console.log('🔄 Comentário sincronizado');
       }
     }
     
@@ -449,7 +500,7 @@ async function handleLike(e) {
     countSpan.textContent = hasLiked ? currentCount - 1 : currentCount + 1;
     
   } catch (error) {
-    console.error('Erro ao curtir:', error);
+    console.error('❌ Erro ao curtir:', error);
     showToast('error', 'Erro', 'Não foi possível curtir a avaliação.');
   }
 }

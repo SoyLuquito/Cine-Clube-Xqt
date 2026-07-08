@@ -114,29 +114,19 @@
                 
                 <!-- Formulário de Avaliação -->
                 <div id="myReviewForm" class="review-form">
-                    <!-- Grupo de Nota -->
-                    <div class="rating-group">
-                        <div class="form-group">
-                            <label>Nota Geral</label>
-                            <div class="star-rating-input" id="myRatingStars">
-                                <!-- As estrelas serão geradas pelo JavaScript -->
-                            </div>
-                            <span class="rating-label" id="myRatingLabel">Selecione uma nota</span>
-                        </div>
+                    <div class="review-form-rating">
+                        <label>Nota</label>
+                        <div class="star-rating-input" id="myRatingStars"></div>
+                        <span class="rating-label" id="myRatingLabel">Selecione uma nota</span>
                     </div>
                     
-                    <!-- Grupo de Resenha -->
-                    <div class="review-group">
-                        <div class="form-group">
-                            <label>Resenha</label>
-                            <textarea id="myReviewText" rows="4" placeholder="Escreva sua crítica ou opinião sobre o filme..."></textarea>
-                        </div>
+                    <div class="review-form-text">
+                        <label>Resenha <span class="optional">(opcional)</span></label>
+                        <textarea id="myReviewText" rows="4" placeholder="Escreva sua crítica ou opinião sobre o filme..."></textarea>
                     </div>
                     
-                    <!-- Botões -->
                     <div class="review-actions">
                         <button class="btn-primary" id="submitReviewBtn">Enviar Avaliação</button>
-                        <button class="btn-secondary hidden" id="deleteReviewBtn">Excluir Avaliação</button>
                     </div>
                 </div>
                 
@@ -146,10 +136,24 @@
                         <div class="my-review-stars" id="myReviewStars"></div>
                         <span class="my-review-score" id="myReviewScore"></span>
                     </div>
-                    <p class="my-review-text" id="myReviewTextDisplay"></p>
+                    <div class="my-review-text-wrapper">
+                        <p class="my-review-text" id="myReviewTextDisplay"></p>
+                    </div>
                     <div class="my-review-actions">
-                        <button class="btn-edit" id="editReviewBtn">Editar Avaliação</button>
-                        <button class="btn-delete" id="deleteReviewBtn2">Excluir</button>
+                        <button class="btn-icon btn-edit" id="editReviewBtn" title="Editar avaliação">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 20h9"/>
+                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                            </svg>
+                        </button>
+                        <button class="btn-icon btn-delete" id="deleteReviewBtn2" title="Excluir avaliação">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"/>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                <line x1="10" y1="11" x2="10" y2="17"/>
+                                <line x1="14" y1="11" x2="14" y2="17"/>
+                            </svg>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -226,6 +230,27 @@
 
     <!-- Sistema de Notificações Toast -->
     <div id="notification-container"></div>
+
+    <!-- Modal de Editar Resposta -->
+    <div class="modal-overlay hidden" id="editReplyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Editar Resposta</h2>
+                <button class="modal-close" id="closeEditReplyModal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="edit-reply-form">
+                    <textarea id="editReplyText" rows="3" placeholder="Edite sua resposta..."></textarea>
+                    <button class="btn-primary" id="saveEditReplyBtn">Salvar Alterações</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script type="module" src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js"></script>
     <script type="module" src="https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js"></script>
