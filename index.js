@@ -44,6 +44,7 @@ const registerForm = document.getElementById('register-form');
 // Login fields
 const loginLogin = document.getElementById('login-login');
 const loginSenha = document.getElementById('login-senha');
+const rememberMe = document.getElementById('rememberMe');
 
 // Register fields
 const regNome = document.getElementById('reg-nome');
@@ -240,6 +241,42 @@ async function checkLoginExists(login) {
   }
 }
 
+// ===== CARREGAR DADOS SALVOS DO "LEMBRAR DE MIM" =====
+function loadRememberedLogin() {
+    try {
+        const savedLogin = localStorage.getItem('cine_clube_remember_login');
+        const savedPassword = localStorage.getItem('cine_clube_remember_password');
+        const savedRemember = localStorage.getItem('cine_clube_remember_checked');
+        
+        if (savedRemember === 'true' && savedLogin) {
+            loginLogin.value = savedLogin;
+            if (savedPassword) {
+                loginSenha.value = savedPassword;
+            }
+            rememberMe.checked = true;
+        }
+    } catch (error) {
+        console.error('Erro ao carregar dados salvos:', error);
+    }
+}
+
+// ===== SALVAR DADOS DO "LEMBRAR DE MIM" =====
+function saveRememberedLogin(login, senha, remember) {
+    try {
+        if (remember) {
+            localStorage.setItem('cine_clube_remember_login', login);
+            localStorage.setItem('cine_clube_remember_password', senha);
+            localStorage.setItem('cine_clube_remember_checked', 'true');
+        } else {
+            localStorage.removeItem('cine_clube_remember_login');
+            localStorage.removeItem('cine_clube_remember_password');
+            localStorage.removeItem('cine_clube_remember_checked');
+        }
+    } catch (error) {
+        console.error('Erro ao salvar dados:', error);
+    }
+}
+
 // ===== REGISTER =====
 registerForm.addEventListener('submit', async function(e) {
   e.preventDefault();
@@ -337,11 +374,15 @@ loginForm.addEventListener('submit', async function(e) {
 
   const login = loginLogin.value.trim();
   const senha = loginSenha.value.trim();
+  const remember = rememberMe.checked;
 
   if (!login || !senha) {
     showNotification('error', 'Campos incompletos', 'Preencha login e senha.');
     return;
   }
+
+  // Salva o "Lembrar de mim" antes de fazer o login
+  saveRememberedLogin(login, senha, remember);
 
   const submitBtn = loginForm.querySelector('.btn-primary');
   submitBtn.disabled = true;
@@ -390,7 +431,10 @@ loginForm.addEventListener('submit', async function(e) {
 // ===== INIT =====
 showLogin();
 
+// Carrega o login salvo
+loadRememberedLogin();
+
 setTimeout(() => {
-  const firstInput = loginSection.querySelector('input');
-  if (firstInput) firstInput.focus();
+    const firstInput = loginSection.querySelector('input');
+    if (firstInput) firstInput.focus();
 }, 200);

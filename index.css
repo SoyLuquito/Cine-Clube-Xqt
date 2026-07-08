@@ -187,6 +187,62 @@ body {
   transform: scale(0.92);
 }
 
+/* ===== LEMBRAR DE MIM ===== */
+.remember-group {
+  margin: 4px 0 12px 0;
+  display: flex;
+  align-items: center;
+}
+
+.remember-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: #555;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 500;
+}
+
+.remember-label input[type="checkbox"] {
+  display: none;
+}
+
+.remember-label .checkmark {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ccc;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+  background: #f5f5f7;
+}
+
+.remember-label input:checked + .checkmark {
+  background: linear-gradient(135deg, #fd77cb, #f062b8);
+  border-color: #fd77cb;
+}
+
+.remember-label input:checked + .checkmark::after {
+  content: "✓";
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.remember-label:hover .checkmark {
+  border-color: #fd77cb;
+}
+
+.remember-label input:checked:hover + .checkmark {
+  background: linear-gradient(135deg, #e055a8, #d44a9e);
+  border-color: #e055a8;
+}
+
 /* Botão primário */
 .btn-primary {
   width: 100%;
@@ -274,6 +330,15 @@ body {
   }
 
   .toggle-password svg {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .remember-label {
+    font-size: 0.85rem;
+  }
+  
+  .remember-label .checkmark {
     width: 18px;
     height: 18px;
   }
