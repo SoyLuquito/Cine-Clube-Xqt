@@ -46,8 +46,19 @@
                     <input type="file" id="avatarInput" accept="image/*" style="display:none;">
                 </div>
                 <div class="profile-info">
-                    <h1 class="profile-name" id="profileName">Nome do Usuário</h1>
-                    <p class="profile-login" id="profileLogin">@usuario</p>
+                    <div class="profile-name-container">
+                        <h1 class="profile-name" id="profileName">Nome do Usuário</h1>
+                        <div class="profile-name-edit hidden" id="profileNameEdit">
+                            <input type="text" id="profileNameInput" placeholder="Seu nome">
+                        </div>
+                    </div>
+                    <div class="profile-login-container">
+                        <p class="profile-login" id="profileLogin">@usuario</p>
+                        <div class="profile-login-edit hidden" id="profileLoginEdit">
+                            <input type="text" id="profileLoginInput" placeholder="Novo login">
+                            <small style="color:#666;font-size:0.7rem;">O login deve ser único e não pode estar em uso</small>
+                        </div>
+                    </div>
                 </div>
                 <button class="edit-profile-btn" id="editProfileBtn">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

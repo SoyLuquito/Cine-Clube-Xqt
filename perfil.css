@@ -76,7 +76,7 @@ body {
   color: white;
   font-size: 1.1rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #fd77cb, #fd77cb);
+  background: linear-gradient(135deg, white, #fd77cb);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -135,6 +135,7 @@ body {
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   position: relative;
+  flex-wrap: wrap;
 }
 
 .profile-avatar-container {
@@ -145,7 +146,7 @@ body {
 .profile-avatar {
   width: 100px;
   height: 100px;
-  border-radius: 50%; /* Mudar de 50% para 20% ou o valor que preferir */
+  border-radius: 50%;
   background: linear-gradient(135deg, #fd77cb, #f062b8);
   display: flex;
   align-items: center;
@@ -198,24 +199,90 @@ body {
 
 .profile-info {
   flex: 1;
+  min-width: 180px;
+}
+
+/* ===== PROFILE NAME EDIT ===== */
+.profile-name-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .profile-name {
   color: white;
   font-size: 1.5rem;
   font-weight: 700;
-  margin-bottom: 4px;
+  margin-bottom: 0;
+}
+
+.profile-name-edit.hidden {
+  display: none;
+}
+
+.profile-name-edit input {
+  width: 100%;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: white;
+  font-size: 1.2rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.profile-name-edit input:focus {
+  outline: none;
+  border-color: #fd77cb;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(253, 119, 203, 0.1);
+}
+
+.profile-login-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .profile-login {
   color: #888;
   font-size: 0.95rem;
+  margin: 0;
+}
+
+.profile-login-edit.hidden {
+  display: none;
+}
+
+.profile-login-edit input {
+  width: 100%;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: white;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.profile-login-edit input:focus {
+  outline: none;
+  border-color: #fd77cb;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(253, 119, 203, 0.1);
+}
+
+.profile-login-edit small {
+  display: block;
+  margin-top: 2px;
 }
 
 .profile-actions {
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .edit-profile-btn,
@@ -351,7 +418,7 @@ body {
   grid-template-columns: repeat(4, 1fr);
   gap: 14px;
   margin-bottom: 12px;
-  width: 100%; /* Mudado de max-width para width: 100% */
+  width: 100%;
   max-width: 420px;
   margin-left: auto;
   margin-right: auto;
@@ -366,7 +433,7 @@ body {
   transition: all 0.2s ease;
   cursor: pointer;
   position: relative;
-  width: 100%; /* Garantir que cada item ocupe toda a célula */
+  width: 100%;
 }
 
 .top-movie-item:hover {
@@ -786,6 +853,8 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.1);
   cursor: grab;
   touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .crop-wrapper:active {
@@ -796,8 +865,8 @@ body {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  transition: transform 0.2s ease;
   pointer-events: none;
+  transition: transform 0.15s ease;
 }
 
 .crop-overlay {
@@ -811,54 +880,107 @@ body {
 
 .crop-box {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 70%;
-  height: 70%;
   border: 2px solid #fd77cb;
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
   border-radius: 4px;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: grab;
   transition: none;
+  z-index: 5;
 }
 
-.crop-box.dragging {
-  transition: none;
+.crop-box:active {
+  cursor: grabbing;
 }
 
-.crop-controls {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 4px 0;
-}
-
-.crop-btn {
-  width: 36px;
-  height: 36px;
+.crop-handle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: #fd77cb;
+  border: 2px solid white;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.06);
-  color: white;
-  font-size: 1.2rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  pointer-events: auto;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  transition: transform 0.15s ease;
 }
 
-.crop-btn:hover {
-  background: rgba(253, 119, 203, 0.2);
-  border-color: #fd77cb;
+.crop-handle:hover {
+  transform: scale(1.2);
 }
 
-.zoom-level {
+.crop-handle-tl {
+  top: -7px;
+  left: -7px;
+  cursor: nwse-resize;
+}
+
+.crop-handle-tr {
+  top: -7px;
+  right: -7px;
+  cursor: nesw-resize;
+}
+
+.crop-handle-bl {
+  bottom: -7px;
+  left: -7px;
+  cursor: nesw-resize;
+}
+
+.crop-handle-br {
+  bottom: -7px;
+  right: -7px;
+  cursor: nwse-resize;
+}
+
+.crop-edge {
+  position: absolute;
+  pointer-events: auto;
+  z-index: 8;
+}
+
+.crop-edge-top {
+  top: -6px;
+  left: 14px;
+  right: 14px;
+  height: 12px;
+  cursor: ns-resize;
+}
+
+.crop-edge-bottom {
+  bottom: -6px;
+  left: 14px;
+  right: 14px;
+  height: 12px;
+  cursor: ns-resize;
+}
+
+.crop-edge-left {
+  left: -6px;
+  top: 14px;
+  bottom: 14px;
+  width: 12px;
+  cursor: ew-resize;
+}
+
+.crop-edge-right {
+  right: -6px;
+  top: 14px;
+  bottom: 14px;
+  width: 12px;
+  cursor: ew-resize;
+}
+
+.zoom-indicator {
   color: #aaa;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   min-width: 50px;
   text-align: center;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 4px 12px;
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
 }
 
 .crop-actions {
@@ -897,24 +1019,6 @@ body {
 .btn-confirm-crop:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 16px rgba(253, 119, 203, 0.3);
-}
-
-/* ===== RESPONSIVE CROP ===== */
-@media (max-width: 480px) {
-  .crop-box {
-    width: 80%;
-    height: 80%;
-  }
-  
-  .crop-controls {
-    gap: 12px;
-  }
-  
-  .crop-btn {
-    width: 32px;
-    height: 32px;
-    font-size: 1rem;
-  }
 }
 
 /* ===== MODAL OVERLAY ===== */
@@ -997,40 +1101,6 @@ body {
   flex: 1;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* ===== RESPONSIVE CROP ===== */
-@media (max-width: 480px) {
-  .crop-box {
-    width: 80%;
-    height: 80%;
-  }
-  
-  .crop-controls {
-    gap: 12px;
-  }
-  
-  .crop-btn {
-    width: 32px;
-    height: 32px;
-    font-size: 1rem;
-  }
-}
-
 /* ===== RESPONSIVE ===== */
 @media (max-width: 640px) {
   .profile-header {
@@ -1048,6 +1118,10 @@ body {
   .profile-name {
     font-size: 1.2rem;
   }
+  
+  .profile-name-edit input {
+    font-size: 1rem;
+  }
 
   .profile-actions {
     flex-wrap: wrap;
@@ -1063,8 +1137,8 @@ body {
 
   .top-movies-grid {
     gap: 10px;
-    max-width: 100%; /* Ocupa toda a largura */
-    padding: 0 4px; /* Pequeno padding lateral */
+    max-width: 100%;
+    padding: 0 4px;
   }
 
   .top-movie-item {

@@ -7,6 +7,9 @@ import {
   getFirestore, 
   doc, 
   updateDoc,
+  setDoc,
+  deleteDoc,
+  getDoc,
   collection,
   query,
   where,
@@ -51,6 +54,10 @@ const genresContainer = document.getElementById('genresContainer');
 const genresEdit = document.getElementById('genresEdit');
 const genresInput = document.getElementById('genresInput');
 const recentReviewsList = document.getElementById('recentReviewsList');
+const profileNameInput = document.getElementById('profileNameInput');
+const profileLoginInput = document.getElementById('profileLoginInput');
+const profileNameEdit = document.getElementById('profileNameEdit');
+const profileLoginEdit = document.getElementById('profileLoginEdit');
 
 let currentUser = null;
 let currentUserData = null;
@@ -145,6 +152,19 @@ function generateStars(rating) {
   for (let i = 0; i < empty; i++) html += '☆';
   
   return html;
+}
+
+// ===== VERIFICAR SE LOGIN EXISTE =====
+async function checkLoginExists(login) {
+    if (!login) return false;
+    try {
+        const docRef = doc(db, 'usuarios', login);
+        const docSnap = await getDoc(docRef);
+        return docSnap.exists();
+    } catch (error) {
+        console.error('Erro ao verificar login:', error);
+        return false;
+    }
 }
 
 // ===== LOAD TOP MOVIES =====
@@ -1146,7 +1166,9 @@ editProfileBtn.addEventListener('click', function() {
   originalData = {
     bio: currentUserData.bio || '',
     topMovies: [...(currentUserData.topMovies || [])],
-    generos: [...(currentUserData.generos || [])]
+    generos: [...(currentUserData.generos || [])],
+    nome: currentUserData.nome || '',
+    login: currentUserData.login || ''
   };
   
   tempTopMovies = [...originalData.topMovies];
@@ -1157,10 +1179,21 @@ editProfileBtn.addEventListener('click', function() {
   cancelEditBtn.classList.remove('hidden');
   editAvatarBtn.classList.add('visible');
   
+  // Bio
   bioDisplay.style.display = 'none';
   bioEdit.classList.remove('hidden');
   bioInput.value = currentUserData.bio || '';
   bioInput.focus();
+  
+  // Nome - mostra input
+  profileName.style.display = 'none';
+  profileNameEdit.classList.remove('hidden');
+  profileNameInput.value = currentUserData.nome || '';
+  
+  // Login - mostra input
+  profileLogin.style.display = 'none';
+  profileLoginEdit.classList.remove('hidden');
+  profileLoginInput.value = currentUserData.login || '';
   
   renderTopMovies(tempTopMovies);
   renderGenres(tempGenres);
@@ -1172,11 +1205,24 @@ cancelEditBtn.addEventListener('click', function() {
   currentUserData.bio = originalData.bio;
   currentUserData.topMovies = originalData.topMovies;
   currentUserData.generos = originalData.generos;
+  currentUserData.nome = originalData.nome;
+  currentUserData.login = originalData.login;
   tempTopMovies = [...originalData.topMovies];
   tempGenres = [...originalData.generos];
   
+  // Bio
   bioDisplay.style.display = 'block';
   bioEdit.classList.add('hidden');
+  
+  // Nome
+  profileName.style.display = 'block';
+  profileNameEdit.classList.add('hidden');
+  profileName.textContent = originalData.nome;
+  
+  // Login
+  profileLogin.style.display = 'block';
+  profileLoginEdit.classList.add('hidden');
+  profileLogin.textContent = `@${originalData.login}`;
   
   renderTopMovies(currentUserData.topMovies);
   renderGenres(currentUserData.generos);
@@ -1191,24 +1237,95 @@ cancelEditBtn.addEventListener('click', function() {
 
 saveProfileBtn.addEventListener('click', async function() {
   const newBio = bioInput.value.trim();
+  const newNome = profileNameInput.value.trim();
+  const newLogin = profileLoginInput.value.trim().toLowerCase();
   const newGenres = genresInput.value.split(',').map(g => g.trim()).filter(g => g).slice(0, 3);
   
+  // Validações
+  if (!newNome) {
+    showToast('warning', 'Nome vazio', 'Por favor, insira um nome.');
+    profileNameInput.focus();
+    return;
+  }
+  
+  if (!newLogin) {
+    showToast('warning', 'Login vazio', 'Por favor, insira um login.');
+    profileLoginInput.focus();
+    return;
+  }
+  
+  // Verifica se o login mudou e se já existe
+  if (newLogin !== originalData.login) {
+    const loginExists = await checkLoginExists(newLogin);
+    if (loginExists) {
+      showToast('warning', 'Login indisponível', `O login "${newLogin}" já está em uso. Escolha outro.`);
+      profileLoginInput.focus();
+      profileLoginInput.select();
+      return;
+    }
+  }
+  
+  this.disabled = true;
+  this.textContent = 'Salvando...';
+  
   try {
-    await updateDoc(doc(db, 'usuarios', currentUserData.id), {
-      bio: newBio,
-      topMovies: tempTopMovies,
-      generos: newGenres
-    });
+    // Atualiza o documento com o novo ID se o login mudou
+    if (newLogin !== originalData.login) {
+      // Cria novo documento com o novo login
+      const newDocRef = doc(db, 'usuarios', newLogin);
+      await setDoc(newDocRef, {
+        uid: currentUserData.uid,
+        nome: newNome,
+        email: currentUserData.email,
+        login: newLogin,
+        bio: newBio,
+        topMovies: tempTopMovies,
+        generos: newGenres,
+        fotoPerfil: currentUserData.fotoPerfil || '',
+        updatedAt: serverTimestamp()
+      });
+      
+      // Remove o documento antigo
+      const oldDocRef = doc(db, 'usuarios', originalData.login);
+      await deleteDoc(oldDocRef);
+      
+      // Atualiza os dados locais
+      currentUserData.id = newLogin;
+      currentUserData.login = newLogin;
+      currentUserData.nome = newNome;
+    } else {
+      // Atualiza o documento existente
+      await updateDoc(doc(db, 'usuarios', currentUserData.id), {
+        nome: newNome,
+        bio: newBio,
+        topMovies: tempTopMovies,
+        generos: newGenres,
+        updatedAt: serverTimestamp()
+      });
+    }
     
     currentUserData.bio = newBio;
     currentUserData.topMovies = tempTopMovies;
     currentUserData.generos = newGenres;
+    currentUserData.nome = newNome;
+    currentUserData.login = newLogin;
     
     isEditMode = false;
     
+    // Bio
     bioDisplay.style.display = 'block';
     bioEdit.classList.add('hidden');
     bioText.textContent = newBio || 'Nenhuma bio adicionada ainda.';
+    
+    // Nome
+    profileName.style.display = 'block';
+    profileNameEdit.classList.add('hidden');
+    profileName.textContent = newNome;
+    
+    // Login
+    profileLogin.style.display = 'block';
+    profileLoginEdit.classList.add('hidden');
+    profileLogin.textContent = `@${newLogin}`;
     
     renderTopMovies(tempTopMovies);
     renderGenres(newGenres);
@@ -1219,9 +1336,14 @@ saveProfileBtn.addEventListener('click', async function() {
     editAvatarBtn.classList.remove('visible');
     
     showToast('success', 'Perfil atualizado!', 'Suas alterações foram salvas com sucesso.');
+    
   } catch (error) {
     console.error('Erro ao salvar perfil:', error);
     showToast('error', 'Erro', 'Não foi possível salvar as alterações.');
+  } finally {
+    this.disabled = false;
+    this.textContent = 'Salvar';
+    this.classList.remove('hidden');
   }
 });
 
