@@ -163,13 +163,22 @@
                     <div class="crop-wrapper" id="cropWrapper">
                         <img id="cropImage" src="" alt="Selecione a área para recortar">
                         <div class="crop-overlay" id="cropOverlay">
-                            <div class="crop-box" id="cropBox"></div>
+                            <div class="crop-box" id="cropBox">
+                                <!-- Handles de redimensionamento -->
+                                <div class="crop-handle crop-handle-tl" data-handle="tl"></div>
+                                <div class="crop-handle crop-handle-tr" data-handle="tr"></div>
+                                <div class="crop-handle crop-handle-bl" data-handle="bl"></div>
+                                <div class="crop-handle crop-handle-br" data-handle="br"></div>
+                                <!-- Bordas para redimensionamento -->
+                                <div class="crop-edge crop-edge-top" data-handle="top"></div>
+                                <div class="crop-edge crop-edge-bottom" data-handle="bottom"></div>
+                                <div class="crop-edge crop-edge-left" data-handle="left"></div>
+                                <div class="crop-edge crop-edge-right" data-handle="right"></div>
+                            </div>
                         </div>
                     </div>
                     <div class="crop-controls">
-                        <button class="crop-btn" id="decreaseBtn">−</button>
-                        <span class="size-level" id="sizeLevel">70%</span>
-                        <button class="crop-btn" id="increaseBtn">+</button>
+                        <span class="zoom-indicator" id="sizeLevel">70%</span>
                     </div>
                     <div class="crop-actions">
                         <button class="btn-cancel-crop" id="cancelCropBtn">Cancelar</button>

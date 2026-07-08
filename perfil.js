@@ -67,11 +67,22 @@ let cropImageElement = null;
 let isCropping = false;
 let cropWrapper = null;
 let cropBox = null;
-let isDragging = false;
+
+// Variáveis para arrastar o box
+let isDraggingBox = false;
 let dragStartX = 0;
 let dragStartY = 0;
 let boxStartX = 0;
 let boxStartY = 0;
+let boxStartPercentX = 0;
+let boxStartPercentY = 0;
+
+// Variáveis para redimensionar
+let isResizing = false;
+let resizeHandle = null;
+let resizeStartX = 0;
+let resizeStartY = 0;
+let resizeStartSize = 0;
 
 // ===== TOAST NOTIFICATIONS =====
 function showToast(type, title, message, duration = 4000) {
@@ -684,19 +695,18 @@ function renderProfile() {
   }
 }
 
-// ===== CROP FUNCTIONS =====
+// ===== FUNÇÕES DO CROP =====
+
 function openCropModal(imageSrc) {
     const modal = document.getElementById('cropModal');
     const img = document.getElementById('cropImage');
-    const sizeLevel = document.getElementById('sizeLevel');
     
-    if (!modal || !img || !sizeLevel) return;
+    if (!modal || !img) return;
     
     img.src = imageSrc;
     cropBoxSize = 70;
     cropImageElement = img;
     isCropping = true;
-    sizeLevel.textContent = '70%';
     
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
@@ -710,8 +720,14 @@ function openCropModal(imageSrc) {
         cropBoxEl.style.height = '70%';
     }
     
+    // Atualiza o indicador de tamanho
+    const sizeLevel = document.getElementById('sizeLevel');
+    if (sizeLevel) {
+        sizeLevel.textContent = '70%';
+    }
+    
     img.onload = function() {
-        setupDragAndResizeEvents();
+        setupCropEvents();
     };
     if (img.complete) {
         img.onload();
@@ -724,17 +740,8 @@ function closeCropModal() {
     document.body.style.overflow = '';
     isCropping = false;
     cropImageElement = null;
-    isDragging = false;
-}
-
-function increaseBoxSize() {
-    cropBoxSize = Math.min(cropBoxSize + 5, 95);
-    updateCropBoxSizeAndPosition();
-}
-
-function decreaseBoxSize() {
-    cropBoxSize = Math.max(cropBoxSize - 5, 30);
-    updateCropBoxSizeAndPosition();
+    isDraggingBox = false;
+    isResizing = false;
 }
 
 function updateCropBoxSizeAndPosition() {
@@ -743,15 +750,21 @@ function updateCropBoxSizeAndPosition() {
     
     cropBoxEl.style.width = `${cropBoxSize}%`;
     cropBoxEl.style.height = `${cropBoxSize}%`;
-    document.getElementById('sizeLevel').textContent = `${Math.round(cropBoxSize)}%`;
+    
+    // Atualiza o indicador de tamanho
+    const sizeLevel = document.getElementById('sizeLevel');
+    if (sizeLevel) {
+        sizeLevel.textContent = `${Math.round(cropBoxSize)}%`;
+    }
 }
 
-function setupDragAndResizeEvents() {
+function setupCropEvents() {
     const wrapper = document.getElementById('cropWrapper');
     const cropBoxEl = document.getElementById('cropBox');
     
     if (!wrapper || !cropBoxEl) return;
     
+    // Remove event listeners antigos clonando
     const newWrapper = wrapper.cloneNode(true);
     wrapper.parentNode.replaceChild(newWrapper, wrapper);
     
@@ -759,143 +772,210 @@ function setupDragAndResizeEvents() {
     cropBox = document.getElementById('cropBox');
     cropImageElement = document.getElementById('cropImage');
     
+    // Configura posição inicial
     cropBox.style.width = `${cropBoxSize}%`;
     cropBox.style.height = `${cropBoxSize}%`;
     cropBox.style.left = '50%';
     cropBox.style.top = '50%';
     cropBox.style.transform = 'translate(-50%, -50%)';
     
-    cropWrapper.addEventListener('mousedown', function(e) {
-        if (e.target.closest('.crop-btn') || e.target.closest('.crop-actions')) return;
+    // ===== DRAG DO BOX (mouse) =====
+    cropBox.addEventListener('mousedown', function(e) {
+        if (e.target.closest('.crop-handle') || e.target.closest('.crop-edge')) {
+            return;
+        }
         
+        isDraggingBox = true;
+        const rect = cropBox.getBoundingClientRect();
         const wrapperRect = cropWrapper.getBoundingClientRect();
-        const boxRect = cropBox.getBoundingClientRect();
         
-        isDragging = true;
         dragStartX = e.clientX;
         dragStartY = e.clientY;
-        boxStartX = boxRect.left - wrapperRect.left;
-        boxStartY = boxRect.top - wrapperRect.top;
+        boxStartX = rect.left - wrapperRect.left;
+        boxStartY = rect.top - wrapperRect.top;
         
-        cropBox.classList.add('dragging');
-        cropWrapper.style.cursor = 'grabbing';
+        // Guarda a posição em porcentagem
+        const wrapperWidth = wrapperRect.width;
+        const wrapperHeight = wrapperRect.height;
+        boxStartPercentX = (boxStartX / wrapperWidth) * 100;
+        boxStartPercentY = (boxStartY / wrapperHeight) * 100;
+        
+        cropBox.style.cursor = 'grabbing';
         e.preventDefault();
     });
     
-    document.addEventListener('mousemove', function(e) {
-        if (!isDragging) return;
-        
-        const wrapperRect = cropWrapper.getBoundingClientRect();
-        const wrapperWidth = wrapperRect.width;
-        const wrapperHeight = wrapperRect.height;
-        
-        const deltaX = e.clientX - dragStartX;
-        const deltaY = e.clientY - dragStartY;
-        
-        let newLeft = boxStartX + deltaX;
-        let newTop = boxStartY + deltaY;
-        
-        const boxSizePx = (cropBoxSize / 100) * wrapperWidth;
-        const maxX = wrapperWidth - boxSizePx;
-        const maxY = wrapperHeight - boxSizePx;
-        
-        newLeft = Math.max(0, Math.min(maxX, newLeft));
-        newTop = Math.max(0, Math.min(maxY, newTop));
-        
-        const percentX = (newLeft / wrapperWidth) * 100;
-        const percentY = (newTop / wrapperHeight) * 100;
-        
-        cropBox.style.left = `${percentX}%`;
-        cropBox.style.top = `${percentY}%`;
-        cropBox.style.transform = 'translate(0, 0)';
-    });
-    
-    document.addEventListener('mouseup', function() {
-        if (isDragging) {
-            isDragging = false;
-            cropBox.classList.remove('dragging');
-            cropWrapper.style.cursor = 'grab';
+    // ===== DRAG DO BOX (touch) =====
+    cropBox.addEventListener('touchstart', function(e) {
+        if (e.target.closest('.crop-handle') || e.target.closest('.crop-edge')) {
+            return;
         }
-    });
-    
-    let touchStartX = 0, touchStartY = 0, touchBoxStartX = 0, touchBoxStartY = 0;
-    
-    cropWrapper.addEventListener('touchstart', function(e) {
-        if (e.target.closest('.crop-btn') || e.target.closest('.crop-actions')) return;
         
         const touch = e.touches[0];
         if (!touch) return;
         
+        isDraggingBox = true;
+        const rect = cropBox.getBoundingClientRect();
         const wrapperRect = cropWrapper.getBoundingClientRect();
-        const boxRect = cropBox.getBoundingClientRect();
         
-        isDragging = true;
-        touchStartX = touch.clientX;
-        touchStartY = touch.clientY;
-        touchBoxStartX = boxRect.left - wrapperRect.left;
-        touchBoxStartY = boxRect.top - wrapperRect.top;
+        dragStartX = touch.clientX;
+        dragStartY = touch.clientY;
+        boxStartX = rect.left - wrapperRect.left;
+        boxStartY = rect.top - wrapperRect.top;
         
-        cropBox.classList.add('dragging');
-        e.preventDefault();
-    }, { passive: false });
-    
-    cropWrapper.addEventListener('touchmove', function(e) {
-        if (!isDragging) return;
-        const touch = e.touches[0];
-        if (!touch) return;
-        
-        const wrapperRect = cropWrapper.getBoundingClientRect();
         const wrapperWidth = wrapperRect.width;
         const wrapperHeight = wrapperRect.height;
+        boxStartPercentX = (boxStartX / wrapperWidth) * 100;
+        boxStartPercentY = (boxStartY / wrapperHeight) * 100;
         
-        const deltaX = touch.clientX - touchStartX;
-        const deltaY = touch.clientY - touchStartY;
-        
-        let newLeft = touchBoxStartX + deltaX;
-        let newTop = touchBoxStartY + deltaY;
-        
-        const boxSizePx = (cropBoxSize / 100) * wrapperWidth;
-        const maxX = wrapperWidth - boxSizePx;
-        const maxY = wrapperHeight - boxSizePx;
-        
-        newLeft = Math.max(0, Math.min(maxX, newLeft));
-        newTop = Math.max(0, Math.min(maxY, newTop));
-        
-        const percentX = (newLeft / wrapperWidth) * 100;
-        const percentY = (newTop / wrapperHeight) * 100;
-        
-        cropBox.style.left = `${percentX}%`;
-        cropBox.style.top = `${percentY}%`;
-        cropBox.style.transform = 'translate(0, 0)';
         e.preventDefault();
     }, { passive: false });
     
-    cropWrapper.addEventListener('touchend', function() {
-        if (isDragging) {
-            isDragging = false;
-            cropBox.classList.remove('dragging');
-        }
-    });
-    
-    const increaseBtn = document.getElementById('increaseBtn');
-    const decreaseBtn = document.getElementById('decreaseBtn');
-    
-    if (increaseBtn) {
-        const newInc = increaseBtn.cloneNode(true);
-        increaseBtn.parentNode.replaceChild(newInc, increaseBtn);
-        newInc.addEventListener('click', function() {
-            cropBoxSize = Math.min(cropBoxSize + 5, 95);
-            updateCropBoxSizeAndPosition();
+    // ===== HANDLES DE REDIMENSIONAMENTO =====
+    document.querySelectorAll('.crop-handle, .crop-edge').forEach(handle => {
+        handle.addEventListener('mousedown', function(e) {
+            e.stopPropagation();
+            isResizing = true;
+            resizeHandle = this.dataset.handle || this.className.split(' ')[1]?.replace('crop-edge-', '');
+            
+            resizeStartX = e.clientX;
+            resizeStartY = e.clientY;
+            resizeStartSize = cropBoxSize;
+            
+            e.preventDefault();
         });
+        
+        handle.addEventListener('touchstart', function(e) {
+            e.stopPropagation();
+            const touch = e.touches[0];
+            if (!touch) return;
+            
+            isResizing = true;
+            resizeHandle = this.dataset.handle || this.className.split(' ')[1]?.replace('crop-edge-', '');
+            
+            resizeStartX = touch.clientX;
+            resizeStartY = touch.clientY;
+            resizeStartSize = cropBoxSize;
+            
+            e.preventDefault();
+        }, { passive: false });
+    });
+    
+    // ===== MOVIMENTO DO MOUSE =====
+    document.addEventListener('mousemove', function(e) {
+        if (isDraggingBox) {
+            moveCropBox(e.clientX, e.clientY);
+        } else if (isResizing) {
+            resizeCropBox(e.clientX, e.clientY);
+        }
+    });
+    
+    document.addEventListener('touchmove', function(e) {
+        const touch = e.touches[0];
+        if (!touch) return;
+        
+        if (isDraggingBox) {
+            moveCropBox(touch.clientX, touch.clientY);
+        } else if (isResizing) {
+            resizeCropBox(touch.clientX, touch.clientY);
+        }
+    }, { passive: false });
+    
+    // ===== FIM DO DRAG =====
+    document.addEventListener('mouseup', function() {
+        if (isDraggingBox || isResizing) {
+            isDraggingBox = false;
+            isResizing = false;
+            resizeHandle = null;
+            if (cropBox) {
+                cropBox.style.cursor = 'grab';
+            }
+        }
+    });
+    
+    document.addEventListener('touchend', function() {
+        isDraggingBox = false;
+        isResizing = false;
+        resizeHandle = null;
+    });
+}
+
+// ===== FUNÇÃO PARA MOVER O BOX =====
+function moveCropBox(clientX, clientY) {
+    if (!cropBox || !cropWrapper) return;
+    
+    const wrapperRect = cropWrapper.getBoundingClientRect();
+    const wrapperWidth = wrapperRect.width;
+    const wrapperHeight = wrapperRect.height;
+    
+    const deltaX = clientX - dragStartX;
+    const deltaY = clientY - dragStartY;
+    
+    let newLeft = boxStartX + deltaX;
+    let newTop = boxStartY + deltaY;
+    
+    const boxSizePx = (cropBoxSize / 100) * wrapperWidth;
+    const maxX = wrapperWidth - boxSizePx;
+    const maxY = wrapperHeight - boxSizePx;
+    
+    newLeft = Math.max(0, Math.min(maxX, newLeft));
+    newTop = Math.max(0, Math.min(maxY, newTop));
+    
+    const percentX = (newLeft / wrapperWidth) * 100;
+    const percentY = (newTop / wrapperHeight) * 100;
+    
+    cropBox.style.left = `${percentX}%`;
+    cropBox.style.top = `${percentY}%`;
+    cropBox.style.transform = 'translate(0, 0)';
+}
+
+// ===== FUNÇÃO PARA REDIMENSIONAR O BOX =====
+function resizeCropBox(clientX, clientY) {
+    if (!cropBox || !resizeHandle) return;
+    
+    const wrapperRect = cropWrapper.getBoundingClientRect();
+    const wrapperSize = Math.min(wrapperRect.width, wrapperRect.height);
+    
+    let delta = 0;
+    
+    // Calcula o delta baseado na direção
+    switch(resizeHandle) {
+        case 'tl':
+        case 'tr':
+            delta = (resizeStartY - clientY) / wrapperSize * 100;
+            break;
+        case 'bl':
+        case 'br':
+            delta = (clientY - resizeStartY) / wrapperSize * 100;
+            break;
+        case 'top':
+            delta = (resizeStartY - clientY) / wrapperSize * 100;
+            break;
+        case 'bottom':
+            delta = (clientY - resizeStartY) / wrapperSize * 100;
+            break;
+        case 'left':
+            delta = (resizeStartX - clientX) / wrapperSize * 100;
+            break;
+        case 'right':
+            delta = (clientX - resizeStartX) / wrapperSize * 100;
+            break;
+        default:
+            delta = (clientX - resizeStartX) / wrapperSize * 100;
     }
     
-    if (decreaseBtn) {
-        const newDec = decreaseBtn.cloneNode(true);
-        decreaseBtn.parentNode.replaceChild(newDec, decreaseBtn);
-        newDec.addEventListener('click', function() {
-            cropBoxSize = Math.max(cropBoxSize - 5, 30);
-            updateCropBoxSizeAndPosition();
-        });
+    let newSize = resizeStartSize + delta;
+    newSize = Math.max(30, Math.min(95, newSize));
+    
+    cropBoxSize = newSize;
+    
+    // Atualiza o tamanho
+    cropBox.style.width = `${cropBoxSize}%`;
+    cropBox.style.height = `${cropBoxSize}%`;
+    
+    // Atualiza o indicador de tamanho
+    const sizeLevel = document.getElementById('sizeLevel');
+    if (sizeLevel) {
+        sizeLevel.textContent = `${Math.round(cropBoxSize)}%`;
     }
 }
 
@@ -933,7 +1013,7 @@ function compressImage(base64Image, maxWidth = 300, maxHeight = 300, quality = 0
     });
 }
 
-// ===== APPLY CROP (VERSÃO ÚNICA E CORRIGIDA) =====
+// ===== APLICAR CROP - RECORTE QUADRADO =====
 function applyCrop() {
     if (!cropImageElement) return;
     
@@ -951,18 +1031,10 @@ function applyCrop() {
     const boxX = boxRect.left - containerRect2.left;
     const boxY = boxRect.top - containerRect2.top;
     
-    const centerX = boxX + cropSize / 2;
-    const centerY = boxY + cropSize / 2;
-    const containerCenter = containerSize / 2;
-    
-    const offsetX = centerX - containerCenter;
-    const offsetY = centerY - containerCenter;
-    
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     
-    // Tamanho menor para avatar (200x200 é suficiente)
-    const outputSize = 200;
+    const outputSize = 300;
     canvas.width = outputSize;
     canvas.height = outputSize;
     
@@ -991,11 +1063,19 @@ function applyCrop() {
     const scaleX = naturalWidth / drawWidth;
     const scaleY = naturalHeight / drawHeight;
     
+    const boxCenterX = boxX + cropSize / 2;
+    const boxCenterY = boxY + cropSize / 2;
+    const containerCenter = containerSize / 2;
+    
+    const offsetX = boxCenterX - containerCenter;
+    const offsetY = boxCenterY - containerCenter;
+    
     const cropX = (-drawX + offsetX + (containerSize - cropSize) / 2) * scaleX;
     const cropY = (-drawY + offsetY + (containerSize - cropSize) / 2) * scaleY;
     const cropW = cropSize * scaleX;
     const cropH = cropSize * scaleY;
     
+    // RECORTE QUADRADO - sem máscara circular
     ctx.drawImage(
         img,
         cropX, cropY, cropW, cropH,

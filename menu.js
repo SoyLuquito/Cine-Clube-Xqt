@@ -282,11 +282,17 @@ function displayFeaturedMovie(movie) {
     <div class="featured-poster" onclick="window.location.href='filme.html?id=${movie.id}'">
       ${movie.poster ? `<img src="${movie.poster}" alt="${movie.nome}">` : 
         `<div class="no-poster">${movie.nome}</div>`}
-      <div class="featured-badge">Destaque</div>
     </div>
     <div class="featured-info">
-      <div class="featured-title">${movie.nome}</div>
-      <div class="featured-meta">${movie.ano || ''} ${movie.genero ? `• ${movie.genero}` : ''}</div>
+      <div class="featured-title-row">
+        <div class="featured-title">${movie.nome}</div>
+        <span class="featured-badge">Destaque</span>
+      </div>
+      <div class="featured-meta">
+        <span>${movie.ano || ''}</span>
+        ${movie.genero ? `<span class="separator">•</span><span>${movie.genero}</span>` : ''}
+        ${movie.diretor ? `<span class="separator">•</span><span>${movie.diretor}</span>` : ''}
+      </div>
       ${rating > 0 ? `
         <div class="featured-rating">
           <span class="stars ${hasHalfStar ? 'has-half' : ''}">${starsHtml}</span>
@@ -295,7 +301,7 @@ function displayFeaturedMovie(movie) {
         </div>
       ` : `
         <div class="featured-rating">
-          <span style="color:#666;font-size:0.85rem;">Ainda sem avaliações</span>
+          <span style="color:#666;font-size:0.8rem;">Ainda sem avaliações</span>
         </div>
       `}
     </div>
