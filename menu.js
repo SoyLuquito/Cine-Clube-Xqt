@@ -137,7 +137,6 @@ function compressImage(base64Image, maxWidth = 300, maxHeight = 450, quality = 0
             let width = img.width;
             let height = img.height;
             
-            // Manter proporção
             if (width > height) {
                 if (width > maxWidth) {
                     height = (height * maxWidth) / width;
@@ -156,7 +155,6 @@ function compressImage(base64Image, maxWidth = 300, maxHeight = 450, quality = 0
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
             
-            // Converter para JPEG com qualidade reduzida
             const compressed = canvas.toDataURL('image/jpeg', quality);
             resolve(compressed);
         };
@@ -228,6 +226,26 @@ async function loadMovies() {
   }
 }
 
+// ===== GENERATE STARS HTML =====
+function generateStars(rating) {
+  const full = Math.floor(rating);
+  const hasHalf = rating % 1 >= 0.5 && rating % 1 < 1;
+  const empty = 5 - full - (hasHalf ? 1 : 0);
+  
+  let html = '';
+  for (let i = 0; i < full; i++) {
+    html += '★';
+  }
+  if (hasHalf) {
+    html += '<span class="half-star">★</span>';
+  }
+  for (let i = 0; i < empty; i++) {
+    html += '☆';
+  }
+  
+  return html;
+}
+
 // ===== LOAD FEATURED MOVIE =====
 async function loadFeaturedMovie() {
   try {
@@ -262,21 +280,8 @@ function displayFeaturedMovie(movie) {
   const rating = movie.avaliacoes || 0;
   const ratingCount = movie.totalAvaliacoes || 0;
   
-  // Sistema de estrelas com meias estrelas
-  const fullStars = Math.floor(rating);
+  const starsHtml = generateStars(rating);
   const hasHalfStar = rating % 1 >= 0.5 && rating % 1 < 1;
-  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-  
-  let starsHtml = '';
-  for (let i = 0; i < fullStars; i++) {
-    starsHtml += '★';
-  }
-  if (hasHalfStar) {
-    starsHtml += '★';
-  }
-  for (let i = 0; i < emptyStars; i++) {
-    starsHtml += '☆';
-  }
   
   featuredMovie.innerHTML = `
     <div class="featured-poster" onclick="window.location.href='filme.html?id=${movie.id}'">
@@ -339,31 +344,15 @@ function displayReviews(reviews) {
   let html = '';
   reviews.forEach((review) => {
     const rating = review.nota || 0;
-    const fullStars = Math.floor(rating);
+    const starsHtml = generateStars(rating);
     const hasHalfStar = rating % 1 >= 0.5 && rating % 1 < 1;
-    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-    
-    let starsHtml = '';
-    for (let i = 0; i < fullStars; i++) {
-      starsHtml += '★';
-    }
-    if (hasHalfStar) {
-      starsHtml += '★';
-    }
-    for (let i = 0; i < emptyStars; i++) {
-      starsHtml += '☆';
-    }
     
     const userNome = review.nomeUsuario || review.usuario || 'Usuário';
     const userLogin = review.loginUsuario || 'usuario';
     
-    // VERIFICA SE TEM FOTO DO USUÁRIO
     const userPhoto = review.fotoUsuario || null;
-    
-    // VERIFICA SE TEM POSTER DO FILME
     const posterUrl = review.poster || null;
     
-    // Avatar do usuário
     let avatarHtml = '';
     if (userPhoto) {
       avatarHtml = `<img src="${userPhoto}" alt="${userNome}" style="width:100%;height:100%;object-fit:cover;">`;
@@ -371,7 +360,6 @@ function displayReviews(reviews) {
       avatarHtml = userNome.charAt(0).toUpperCase();
     }
     
-    // Poster do filme
     let posterHtml = '';
     if (posterUrl) {
       posterHtml = `<img src="${posterUrl}" alt="${review.nomeFilme}">`;
@@ -431,7 +419,6 @@ async function handleLike(e) {
   }
   
   try {
-    // 1. ATUALIZA NA COLEÇÃO 'avaliacoes'
     const reviewRef = doc(db, 'avaliacoes', reviewId);
     const reviewDoc = await getDoc(reviewRef);
     
@@ -444,31 +431,24 @@ async function handleLike(e) {
     const userUid = currentUser.uid;
     const hasLiked = usuariosCurtiram.includes(userUid);
     
-    console.log('🔍 Menu - Estado atual:', { hasLiked, curtidas });
-    
     const svg = btn.querySelector('svg');
     
     if (hasLiked) {
-      // REMOVE o like
       await updateDoc(reviewRef, {
         curtidas: curtidas - 1,
         usuariosCurtiram: arrayRemove(userUid)
       });
       btn.classList.remove('liked');
       if (svg) svg.setAttribute('fill', 'none');
-      console.log('👎 Like removido no menu');
     } else {
-      // ADICIONA o like
       await updateDoc(reviewRef, {
         curtidas: curtidas + 1,
         usuariosCurtiram: arrayUnion(userUid)
       });
       btn.classList.add('liked');
       if (svg) svg.setAttribute('fill', '#fd77cb');
-      console.log('👍 Like adicionado no menu');
     }
     
-    // 2. 🔥 TAMBÉM ATUALIZA NA COLEÇÃO 'comentarios'
     const commentRef = doc(db, 'comentarios', reviewId);
     const commentDoc = await getDoc(commentRef);
     
@@ -478,7 +458,6 @@ async function handleLike(e) {
       const commentUsuariosCurtiram = commentData.usuariosCurtiram || [];
       const commentHasLiked = commentUsuariosCurtiram.includes(userUid);
       
-      // 🔥 VERIFICA SE O ESTADO É DIFERENTE ANTES DE ATUALIZAR
       if (commentHasLiked !== hasLiked) {
         if (hasLiked) {
           await updateDoc(commentRef, {
@@ -491,7 +470,6 @@ async function handleLike(e) {
             usuariosCurtiram: arrayUnion(userUid)
           });
         }
-        console.log('🔄 Comentário sincronizado');
       }
     }
     
@@ -786,7 +764,7 @@ document.querySelectorAll('.admin-tab').forEach(tab => {
   });
 });
 
-// ===== ADMIN: CREATE NEW MOVIE (COM COMPRESSÃO) =====
+// ===== ADMIN: CREATE NEW MOVIE =====
 document.getElementById('adminNewMovieForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   
@@ -865,7 +843,7 @@ document.getElementById('adminNewMovieForm').addEventListener('submit', async fu
   }
 });
 
-// ===== ADMIN: ADICIONAR FILME (SEM SER DA SEMANA) =====
+// ===== ADMIN: ADICIONAR FILME =====
 document.getElementById('adminAddOnlyForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   
@@ -921,7 +899,7 @@ document.getElementById('adminAddOnlyForm').addEventListener('submit', async fun
   }
 });
 
-// ===== ADMIN: UPLOAD POSTER PARA A ABA "ADICIONAR FILME" (com compressão) =====
+// ===== ADMIN: UPLOAD POSTER PARA A ABA "ADICIONAR FILME" =====
 document.getElementById('adminAddPoster').addEventListener('change', function(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -1114,7 +1092,7 @@ function selectMovieForAdmin(movie) {
   }
 }
 
-// ===== ADMIN: CREATE MOVIE (função auxiliar para console) =====
+// ===== ADMIN: CREATE MOVIE =====
 async function createMovie(movieData) {
   try {
     const docRef = await addDoc(collection(db, 'filmes'), {

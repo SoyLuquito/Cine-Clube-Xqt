@@ -1377,30 +1377,34 @@ body {
 }
 
 /* ===== ESTRELAS COM MEIA ESTRELA ===== */
+/* ===== ESTRELAS COM MEIA ESTRELA ===== */
 .review-stars,
 .featured-rating .stars {
   color: #f5a623;
   font-size: 1rem;
   letter-spacing: 2px;
-  position: relative;
   display: inline-block;
 }
 
-/* Para meia estrela - esconde a metade direita */
-.review-stars.has-half {
-  position: relative;
+/* Meia estrela - usando clip-path para mostrar apenas metade */
+.half-star {
   display: inline-block;
+  clip-path: inset(0 50% 0 0);
+  width: 0.55em;
+  color: #f5a623;
 }
 
-.review-stars.has-half::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 50%;
-  height: 100%;
-  background: #121212; /* Cor do fundo */
-  pointer-events: none;
+/* Responsivo */
+@media (max-width: 480px) {
+  .review-stars,
+  .featured-rating .stars {
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+  }
+  
+  .half-star {
+    width: 0.5em;
+  }
 }
 
 /* Versão para o featured */
@@ -1933,4 +1937,73 @@ body {
 .review-action-btn.liked svg {
   fill: #fd77cb;
   stroke: #fd77cb;
+}
+
+/* ===== ESTRELAS COM MEIA ESTRELA ===== */
+.review-stars,
+.featured-rating .stars {
+  color: #f5a623;
+  font-size: 1rem;
+  letter-spacing: 2px;
+  display: inline-block;
+}
+
+/* Meia estrela - usa clip-path para mostrar apenas metade */
+.review-stars.has-half {
+  position: relative;
+  display: inline-block;
+}
+
+.review-stars.has-half .half-star {
+  display: inline-block;
+  clip-path: inset(0 50% 0 0);
+}
+
+/* Versão para o featured */
+.featured-rating .stars.has-half {
+  position: relative;
+  display: inline-block;
+}
+
+.featured-rating .stars.has-half .half-star {
+  display: inline-block;
+  clip-path: inset(0 50% 0 0);
+}
+
+/* Responsivo */
+@media (max-width: 480px) {
+  .review-stars,
+  .featured-rating .stars {
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+  }
+}
+
+/* ===== ESTRELAS COM MEIA ESTRELA ===== */
+.review-stars,
+.featured-rating .stars {
+  color: #f5a623;
+  font-size: 1rem;
+  letter-spacing: 2px;
+  display: inline-block;
+}
+
+.review-stars .half-star,
+.featured-rating .stars .half-star {
+  display: inline-block;
+  clip-path: inset(0 50% 0 0);
+}
+
+.review-stars.has-half,
+.featured-rating .stars.has-half {
+  position: relative;
+  display: inline-block;
+}
+
+@media (max-width: 480px) {
+  .review-stars,
+  .featured-rating .stars {
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+  }
 }
